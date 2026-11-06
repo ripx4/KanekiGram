@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KanekiGram</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>KanekiGram</h1>
+        <div id="login-screen">
+            <input type="text" id="username" placeholder="Придумай ник">
+            <input type="password" id="password" placeholder="Придумай пароль">
+            <button onclick="registerUser()">Регистрация</button>
+        </div>
+        <div id="chat-screen" style="display: none;">
+            <div id="messages"></div>
+            <input type="text" id="msg" placeholder="Сообщение...">
+            <button onclick="sendMessage()">Отправить</button>
+        </div>
+    </div>
+    <script>
+        const ws = new WebSocket(`wss://\${window.location.host}`);
+        
+        ws.onmessage = (event) => {
+            const msgDiv = document.createElement('div');
+            msgDiv.textContent = event.data;
+            document.getElementById('messages').appendChild(msgDiv);
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        };
+
+        function registerUser() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            if(username && password) {
+                fetch('/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        document.getElementById('login-screen').style.display = 'none';
+                        document.getElementById('chat-screen').style.display = 'block';
+                    } else {
+                        alert('Ошибка регистрации');
+                    }
+                });
+            }
+        }
+
+        function sendMessage() {
+            const msg = document.getElementById('msg').value;
+            if(msg) {
+                ws.send(msg);
+                document.getElementById('msg').value = '';
+            }
+        }
+    </script>
+</body>
+</html>
